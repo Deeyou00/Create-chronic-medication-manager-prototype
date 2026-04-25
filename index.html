@@ -1,0 +1,2748 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>慢病用药小管家</title>
+    <style>
+      :root {
+        --bg: #f6faf8;
+        --surface: #ffffff;
+        --surface-soft: #f1f8f5;
+        --surface-warm: #fffdf8;
+        --text: #16332b;
+        --muted: #64716d;
+        --line: #dce7e2;
+        --primary: #0f7a5a;
+        --primary-strong: #075d46;
+        --cyan-soft: #e6fafd;
+        --success-soft: #eaf7f1;
+        --warning: #b7791f;
+        --warning-soft: #fff3d7;
+        --danger: #c2413d;
+        --danger-soft: #ffe8e5;
+        --neutral-soft: #f4f6f5;
+        --radius: 8px;
+        --shadow: 0 6px 18px rgba(20, 43, 37, 0.055);
+        --font-scale: 1;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at top left, rgba(15, 122, 90, 0.06), transparent 28%),
+          linear-gradient(180deg, #f8fbfa 0%, var(--bg) 100%);
+        color: var(--text);
+        font-family:
+          "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        font-size: calc(16px * var(--font-scale));
+        line-height: 1.62;
+        font-feature-settings: "tnum";
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      button {
+        min-height: 44px;
+        cursor: pointer;
+      }
+
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible {
+        outline: 3px solid rgba(8, 145, 178, 0.26);
+        outline-offset: 2px;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .app {
+        display: grid;
+        min-height: 100vh;
+        grid-template-columns: 248px minmax(0, 1fr);
+      }
+
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        border-right: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.82);
+        backdrop-filter: blur(10px);
+        padding: 24px 18px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 40px;
+        height: 40px;
+        flex: 0 0 auto;
+        place-items: center;
+        border-radius: 6px;
+        background: var(--primary);
+        color: #fff;
+        font-size: 22px;
+        font-weight: 800;
+      }
+
+      .brand-title {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 800;
+        line-height: 1.25;
+      }
+
+      .brand-subtitle {
+        margin: 2px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .patient-card,
+      .font-panel {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface-soft);
+        padding: 14px;
+      }
+
+      .patient-card strong {
+        display: block;
+        font-size: 16px;
+      }
+
+      .patient-card span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .font-panel {
+        background: var(--surface);
+      }
+
+      .font-panel label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .font-options {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+      }
+
+      .font-option {
+        min-height: 38px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--surface);
+        color: var(--text);
+        padding: 0 8px;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .font-option[aria-pressed="true"] {
+        border-color: var(--primary);
+        background: var(--success-soft);
+        color: var(--primary-strong);
+      }
+
+      .nav {
+        display: grid;
+        gap: 4px;
+      }
+
+      .nav button {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        width: 100%;
+        border: 0;
+        border-radius: var(--radius);
+        background: transparent;
+        color: var(--muted);
+        padding: 0 12px;
+        text-align: left;
+      }
+
+      .nav button:hover {
+        background: var(--neutral-soft);
+        color: var(--text);
+      }
+
+      .nav button[aria-current="page"] {
+        background: var(--success-soft);
+        color: var(--primary-strong);
+        font-weight: 800;
+      }
+
+      .nav-count {
+        color: inherit;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .care-note {
+        margin-top: auto;
+        border-top: 1px solid var(--line);
+        padding-top: 16px;
+      }
+
+      .care-note h2 {
+        margin: 0 0 6px;
+        font-size: 15px;
+      }
+
+      .care-note p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .main {
+        min-width: 0;
+        padding: 30px;
+      }
+
+      .topbar {
+        margin-bottom: 22px;
+      }
+
+      .eyebrow {
+        margin: 0 0 6px;
+        color: var(--primary-strong);
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .topbar h1 {
+        margin: 0;
+        font-size: 32px;
+        line-height: 1.22;
+      }
+
+      .topbar p {
+        margin: 8px 0 0;
+        max-width: 680px;
+        color: var(--muted);
+      }
+
+      .view {
+        display: none;
+      }
+
+      .view.active {
+        display: block;
+      }
+
+      .view-shell {
+        max-width: 980px;
+      }
+
+      .home-shell {
+        max-width: 860px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .section-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 12px;
+      }
+
+      .section-head h2 {
+        margin: 0;
+        font-size: 22px;
+        line-height: 1.3;
+      }
+
+      .section-head p,
+      .section-head small {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .home-main {
+        display: grid;
+        gap: 16px;
+      }
+
+      .priority-card,
+      .next-medicine-card {
+        padding: 22px;
+      }
+
+      .priority-card {
+        border-left: 5px solid var(--danger);
+        background:
+          linear-gradient(180deg, rgba(255, 232, 229, 0.35) 0%, #ffffff 100%);
+      }
+
+      .priority-label {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        border: 1px solid var(--danger);
+        border-radius: 999px;
+        background: var(--danger-soft);
+        color: #85211e;
+        padding: 0 10px;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .priority-card h2 {
+        margin: 12px 0 8px;
+        font-size: 25px;
+        line-height: 1.32;
+      }
+
+      .priority-card p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .priority-actions,
+      .quick-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .next-medicine-card {
+        display: grid;
+        grid-template-columns: 128px minmax(0, 1fr);
+        gap: 18px;
+        align-items: center;
+      }
+
+      .next-time {
+        border-right: 1px solid var(--line);
+        padding-right: 18px;
+      }
+
+      .next-time span {
+        display: block;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .next-time strong {
+        display: block;
+        margin-top: 8px;
+        font-size: 36px;
+        line-height: 1;
+      }
+
+      .next-copy h2 {
+        margin: 0 0 6px;
+        font-size: 24px;
+      }
+
+      .next-copy p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .simple-status {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .status-item {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: rgba(255, 255, 255, 0.84);
+        padding: 16px;
+      }
+
+      .status-item span {
+        display: block;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .status-item strong {
+        display: block;
+        margin-top: 8px;
+        font-size: 22px;
+        line-height: 1.2;
+      }
+
+      .status-item p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .trust-note {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        padding: 16px;
+      }
+
+      .trust-note strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .trust-note p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .todo-list {
+        display: grid;
+        gap: 10px;
+        padding: 16px;
+      }
+
+      .todo-heading {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 12px;
+      }
+
+      .todo-heading h2 {
+        margin: 0;
+        font-size: 20px;
+      }
+
+      .todo-heading span {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .todo-item {
+        display: grid;
+        grid-template-columns: 28px minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+        border-top: 1px solid var(--line);
+        padding-top: 10px;
+      }
+
+      .todo-item:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .todo-item.done {
+        opacity: 0.82;
+      }
+
+      .todo-number {
+        display: grid;
+        width: 28px;
+        height: 28px;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--success-soft);
+        color: var(--primary-strong);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .todo-item.done .todo-number {
+        background: var(--neutral-soft);
+        color: var(--muted);
+      }
+
+      .todo-copy strong {
+        display: block;
+      }
+
+      .todo-copy span {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .subtle-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        border-top: 1px solid var(--line);
+        padding-top: 14px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        color: var(--text);
+        padding: 0 16px;
+        font-weight: 800;
+        white-space: nowrap;
+        transition:
+          border-color 180ms ease,
+          background-color 180ms ease,
+          color 180ms ease,
+          opacity 180ms ease;
+      }
+
+      .btn:hover {
+        border-color: #bdd0c8;
+        background: #fbfdfc;
+      }
+
+      .btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.58;
+      }
+
+      .btn-primary {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        border-color: var(--primary-strong);
+        background: var(--primary-strong);
+      }
+
+      .btn-warm {
+        border-color: #e7c585;
+        background: var(--warning-soft);
+        color: #714208;
+      }
+
+      .page-card {
+        padding: 18px;
+      }
+
+      .action-note {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface-soft);
+        padding: 14px;
+      }
+
+      .action-note strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .action-note p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .action-note.success {
+        border-color: #abdcc7;
+        background: var(--success-soft);
+      }
+
+      .action-note.warning {
+        border-color: #ebd2a0;
+        background: var(--warning-soft);
+      }
+
+      .dose-table {
+        overflow: hidden;
+      }
+
+      .dose-row {
+        display: grid;
+        grid-template-columns: 82px minmax(0, 1fr) 112px;
+        gap: 16px;
+        align-items: center;
+        min-height: 88px;
+        border-top: 1px solid var(--line);
+        padding: 16px 18px;
+      }
+
+      .dose-row:first-child {
+        border-top: 0;
+      }
+
+      .dose-row[data-done="false"] {
+        background: var(--surface-warm);
+      }
+
+      .time {
+        font-size: 20px;
+        font-weight: 850;
+        line-height: 1;
+      }
+
+      .medicine-title {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 5px;
+      }
+
+      .medicine-title strong {
+        font-size: 17px;
+      }
+
+      .medicine-note {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        padding: 0 9px;
+        font-size: 13px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .badge-success {
+        border-color: #aad9c7;
+        background: var(--success-soft);
+        color: var(--primary-strong);
+      }
+
+      .badge-warning {
+        border-color: #e2bd77;
+        background: var(--warning-soft);
+        color: #714208;
+      }
+
+      .badge-danger {
+        border-color: #eda9a4;
+        background: var(--danger-soft);
+        color: #85211e;
+      }
+
+      .badge-info {
+        border-color: #a8deeb;
+        background: var(--cyan-soft);
+        color: #075f77;
+      }
+
+      .take-btn {
+        border: 1px solid var(--primary);
+        background: var(--surface);
+        color: var(--primary-strong);
+      }
+
+      .take-btn.done {
+        border-color: var(--line);
+        background: var(--neutral-soft);
+        color: var(--muted);
+      }
+
+      .missed-help {
+        margin-top: 14px;
+        padding: 16px;
+      }
+
+      .missed-help h3,
+      .pending-plan h3,
+      .summary-block h3 {
+        margin: 0 0 6px;
+        font-size: 18px;
+      }
+
+      .missed-help p,
+      .pending-plan p,
+      .summary-block p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .missed-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .timeline {
+        display: grid;
+        gap: 0;
+        padding: 18px;
+      }
+
+      .timeline-item {
+        position: relative;
+        display: grid;
+        grid-template-columns: 30px minmax(0, 1fr);
+        gap: 12px;
+        padding-bottom: 18px;
+      }
+
+      .timeline-item:last-child {
+        padding-bottom: 0;
+      }
+
+      .timeline-item::before {
+        position: absolute;
+        top: 31px;
+        bottom: 2px;
+        left: 14px;
+        width: 2px;
+        background: var(--line);
+        content: "";
+      }
+
+      .timeline-item:last-child::before {
+        display: none;
+      }
+
+      .timeline-step {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        width: 30px;
+        height: 30px;
+        place-items: center;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        background: var(--surface);
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .timeline-item.active .timeline-step {
+        border-color: var(--warning);
+        background: var(--warning-soft);
+        color: #714208;
+      }
+
+      .timeline-item.complete .timeline-step {
+        border-color: var(--primary);
+        background: var(--success-soft);
+        color: var(--primary-strong);
+      }
+
+      .timeline-copy h3 {
+        margin: 1px 0 5px;
+        font-size: 17px;
+      }
+
+      .timeline-copy p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .inventory-list,
+      .settings-list {
+        display: grid;
+        gap: 14px;
+      }
+
+      .family-list {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .family-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 14px;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        padding: 14px;
+      }
+
+      .family-card.paused {
+        background: var(--surface-soft);
+      }
+
+      .family-card strong {
+        display: block;
+        font-size: 17px;
+      }
+
+      .family-card span {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .family-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      .stock-row {
+        display: grid;
+        gap: 8px;
+        border-top: 1px solid var(--line);
+        padding-top: 14px;
+      }
+
+      .stock-row:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .stock-title,
+      .setting-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .stock-title {
+        font-weight: 800;
+      }
+
+      .progress {
+        overflow: hidden;
+        height: 8px;
+        border-radius: 999px;
+        background: #e8eeeb;
+      }
+
+      .bar {
+        width: var(--w);
+        height: 100%;
+        background: var(--c);
+      }
+
+      .stock-action {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .stock-action p {
+        margin: 0;
+      }
+
+      .setting-row {
+        border-top: 1px solid var(--line);
+        padding-top: 14px;
+      }
+
+      .setting-row:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .setting-row strong {
+        display: block;
+      }
+
+      .setting-row span {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .switch {
+        position: relative;
+        display: inline-flex;
+        width: 48px;
+        height: 28px;
+        flex: 0 0 auto;
+      }
+
+      .switch input {
+        width: 0;
+        height: 0;
+        opacity: 0;
+      }
+
+      .slider {
+        position: absolute;
+        inset: 0;
+        border: 1px solid #bac8c3;
+        border-radius: 999px;
+        background: #e8eeeb;
+      }
+
+      .slider::before {
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: white;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+        content: "";
+        transition: transform 180ms ease;
+      }
+
+      .switch input:checked + .slider {
+        border-color: var(--primary);
+        background: var(--primary);
+      }
+
+      .switch input:checked + .slider::before {
+        transform: translateX(20px);
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .summary-block {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        padding: 16px;
+      }
+
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .metric {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        padding: 16px;
+      }
+
+      .metric label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .metric strong {
+        display: block;
+        margin-top: 12px;
+        font-size: 31px;
+        line-height: 1;
+      }
+
+      .metric span {
+        display: block;
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .field {
+        display: grid;
+        gap: 6px;
+      }
+
+      .field label {
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .required-mark {
+        color: var(--danger);
+      }
+
+      .field input,
+      .field select {
+        width: 100%;
+        min-height: 44px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        color: var(--text);
+        padding: 0 12px;
+      }
+
+      .field input[aria-invalid="true"],
+      .field select[aria-invalid="true"] {
+        border-color: var(--danger);
+        background: #fff9f8;
+      }
+
+      .field-help,
+      .field-error {
+        font-size: 13px;
+      }
+
+      .field-help {
+        color: var(--muted);
+      }
+
+      .field-error {
+        min-height: 18px;
+        color: var(--danger);
+      }
+
+      .wide {
+        grid-column: 1 / -1;
+      }
+
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 16px;
+      }
+
+      .pending-plan {
+        border-left: 5px solid var(--warning);
+        margin-bottom: 14px;
+        padding: 16px;
+      }
+
+      .pending-plan.confirmed {
+        border-left-color: var(--primary);
+        background: linear-gradient(180deg, rgba(234, 247, 241, 0.72) 0%, #ffffff 100%);
+      }
+
+      .pending-plan dl {
+        display: grid;
+        grid-template-columns: max-content minmax(0, 1fr);
+        gap: 6px 14px;
+        margin: 12px 0 0;
+      }
+
+      .pending-plan dt {
+        color: var(--muted);
+      }
+
+      .pending-plan dd {
+        margin: 0;
+        font-weight: 800;
+      }
+
+      .toast {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        z-index: 20;
+        max-width: min(420px, calc(100vw - 32px));
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        padding: 14px 16px;
+        color: var(--text);
+        transform: translateY(18px);
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          transform 180ms ease,
+          opacity 180ms ease;
+      }
+
+      .toast.show {
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          scroll-behavior: auto !important;
+        }
+      }
+
+      @media (max-width: 1080px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          position: sticky;
+          top: 0;
+          z-index: 10;
+          gap: 14px;
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+          padding: 14px;
+        }
+
+        .patient-card,
+        .care-note {
+          display: none;
+        }
+
+        .nav {
+          display: flex;
+          overflow-x: auto;
+          padding-bottom: 2px;
+        }
+
+        .nav button {
+          width: auto;
+          flex: 0 0 auto;
+        }
+      }
+
+      @media (max-width: 760px) {
+        body {
+          font-size: calc(15px * var(--font-scale));
+        }
+
+        .main {
+          padding: 18px 14px 28px;
+        }
+
+        .topbar h1 {
+          font-size: 25px;
+        }
+
+        .simple-status,
+        .next-medicine-card,
+        .todo-item,
+        .dose-row,
+        .metrics-grid,
+        .form-grid,
+        .summary-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .next-time {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+          padding: 0 0 14px;
+        }
+
+        .dose-row {
+          gap: 10px;
+        }
+
+        .btn,
+        .take-btn,
+        .form-actions .btn {
+          width: 100%;
+        }
+
+        .quick-row,
+        .priority-actions,
+        .missed-actions {
+          display: grid;
+        }
+
+        .setting-row,
+        .stock-action {
+          align-items: flex-start;
+        }
+
+        .family-card {
+          grid-template-columns: 1fr;
+        }
+
+        .family-actions {
+          justify-content: stretch;
+        }
+
+        .mobile-secondary,
+        .nav button[data-mobile-hidden="true"] {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sr-only" id="liveRegion" aria-live="polite"></div>
+
+    <div class="app">
+      <aside class="sidebar" aria-label="主导航">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">药</div>
+          <div>
+            <p class="brand-title">慢病用药小管家</p>
+            <p class="brand-subtitle">今天先做什么，一眼就知道</p>
+          </div>
+        </div>
+
+        <section class="patient-card" aria-label="患者摘要">
+          <strong>王女士</strong>
+          <span>高血压合并糖尿病 · 第 7 周</span>
+        </section>
+
+        <section class="font-panel" aria-label="字体大小">
+          <label>字体大小</label>
+          <div class="font-options">
+            <button class="font-option" type="button" data-font-size="normal" aria-pressed="true">标准</button>
+            <button class="font-option" type="button" data-font-size="large" aria-pressed="false">大字</button>
+            <button class="font-option" type="button" data-font-size="xlarge" aria-pressed="false">特大</button>
+          </div>
+        </section>
+
+        <nav class="nav" aria-label="页面菜单">
+          <button aria-current="page" data-view="home">首页 <span class="nav-count" id="navHomeCount">3 件</span></button>
+          <button data-view="plan">吃药 <span class="nav-count" id="navDoseCount">2/4</span></button>
+          <button data-view="refill">续方 <span class="nav-count" id="navRefillCount">还差 1 步</span></button>
+          <button data-view="inventory">库存 <span class="nav-count" id="navInventoryCount">1 项偏紧</span></button>
+          <button data-view="family" data-mobile-hidden="true">家属管理</button>
+          <button data-view="add" data-mobile-hidden="true">新增计划</button>
+        </nav>
+
+        <section class="care-note" aria-label="照护团队">
+          <h2>照护团队</h2>
+          <p id="careTeamNote">陈医生已同步处方信息，补齐晚间血压后可先检查复诊摘要。</p>
+        </section>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <p class="eyebrow" id="pageEyebrow">今天，4 月 26 日</p>
+          <h1 id="pageTitle" tabindex="-1">首页</h1>
+          <p id="pageIntro">先看今天最重要的事，再去处理下一次吃药和复诊准备。</p>
+        </header>
+
+        <section class="view active home-shell" id="view-home" aria-label="首页">
+          <div class="home-main">
+            <article class="panel priority-card" aria-labelledby="priorityTitle">
+              <span class="priority-label" id="priorityLabel">今日重点</span>
+              <h2 id="priorityTitle">这盒二甲双胍快吃完了</h2>
+              <p id="priorityText">家里只够吃 9 天。先补 1 次晚间血压，整理好资料后再预约 2026 年 5 月 1 日复诊。</p>
+              <div class="priority-actions">
+                <button class="btn btn-primary" id="priorityActionBtn" type="button">先补晚间血压</button>
+                <button class="btn mobile-secondary" data-jump="inventory" type="button">看看还够几天</button>
+              </div>
+            </article>
+
+            <article class="panel next-medicine-card" aria-labelledby="nextDoseTitle">
+              <div class="next-time">
+                <span>下一次吃药</span>
+                <strong id="nextDoseTime">19:00</strong>
+              </div>
+              <div class="next-copy">
+                <h2 id="nextDoseTitle">晚饭后吃二甲双胍缓释片</h2>
+                <p id="nextDoseText">0.5g，一片。记录后家属不会再重复催你，今天的服药摘要也会同步更新。</p>
+                <div class="priority-actions">
+                  <button class="btn btn-primary" id="homeTakeBtn" type="button">我已吃药</button>
+                  <button class="btn mobile-secondary" data-jump="plan" type="button">查看今天全部用药</button>
+                </div>
+              </div>
+            </article>
+
+            <div class="simple-status" aria-label="今日简要状态">
+              <div class="status-item">
+                <span>今天吃药情况</span>
+                <strong id="homeDoseStatus">已吃 2 次</strong>
+                <p id="homeDoseRest">还有 2 次待记录</p>
+              </div>
+              <div class="status-item">
+                <span>复诊准备</span>
+                <strong id="homeRefillStatus">还差 1 次晚间血压</strong>
+                <p id="homeRefillDetail">补齐后就能预约 5 月 1 日复诊</p>
+              </div>
+            </div>
+
+            <section class="panel" aria-label="今天待办">
+              <div class="todo-list">
+                <div class="todo-heading">
+                  <h2>今天按这 3 步做就够了</h2>
+                  <span id="todoSummary">先做重要的，再补次要的</span>
+                </div>
+                <div class="todo-item" id="task-dose">
+                  <div class="todo-number">1</div>
+                  <div class="todo-copy">
+                    <strong id="taskDoseTitle">19:00 记录这次二甲双胍</strong>
+                    <span id="taskDoseText">吃完点“我已吃药”，家属提醒会自动消停</span>
+                  </div>
+                  <button class="btn" id="taskDoseBtn" type="button">现在记录</button>
+                </div>
+                <div class="todo-item" id="task-refill">
+                  <div class="todo-number">2</div>
+                  <div class="todo-copy">
+                    <strong id="taskRefillTitle">补 1 次晚间血压</strong>
+                    <span id="taskRefillText">补齐后就能预约复诊，不会因为资料不全来回补交</span>
+                  </div>
+                  <button class="btn" id="taskRefillBtn" type="button">去补资料</button>
+                </div>
+                <div class="todo-item" id="task-plan">
+                  <div class="todo-number">3</div>
+                  <div class="todo-copy">
+                    <strong id="taskPlanTitle">确认家属代添加的新药</strong>
+                    <span id="taskPlanText">确认后才会开始提醒，不会自动改你的医嘱</span>
+                  </div>
+                  <button class="btn" id="taskPlanBtn" type="button">去确认</button>
+                </div>
+              </div>
+            </section>
+
+            <div class="trust-note">
+              <strong>每一步都能自己检查</strong>
+              <p id="homeTrustText">这里的提醒来自处方、库存和吃药记录，只帮你整理，不会替医生改药，也不会自动把摘要发出去。</p>
+            </div>
+
+            <div class="subtle-actions" aria-label="更多功能">
+              <button class="btn" data-jump="family" type="button">看看家属会知道什么</button>
+              <button class="btn" data-jump="summary" type="button">先检查给医生的摘要</button>
+              <button class="btn" data-jump="add" type="button">新增一个用药计划</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="view view-shell" id="view-plan" aria-label="用药计划">
+          <div class="section-head">
+            <div>
+              <h2>今日用药计划</h2>
+              <p>这里只管今天每一次吃药，不混入别的信息。</p>
+            </div>
+            <small id="doseDone">今天已吃 2 次，还有 2 次</small>
+          </div>
+
+          <div class="panel dose-table" id="planList">
+            <article class="dose-row" data-done="true" data-key="morning-pressure">
+              <div class="time">07:30</div>
+              <div>
+                <div class="medicine-title">
+                  <strong>硝苯地平控释片</strong>
+                  <span class="badge badge-success">已服用</span>
+                </div>
+                <div class="medicine-note">30mg · 早餐后 · 剩余 18 天</div>
+              </div>
+              <button class="btn take-btn done" type="button">已吃过</button>
+            </article>
+            <article class="dose-row" data-done="true" data-key="morning-metformin">
+              <div class="time">08:00</div>
+              <div>
+                <div class="medicine-title">
+                  <strong>二甲双胍缓释片</strong>
+                  <span class="badge badge-success">已服用</span>
+                </div>
+                <div class="medicine-note">0.5g · 早餐后 · 剩余 9 天</div>
+              </div>
+              <button class="btn take-btn done" type="button">已吃过</button>
+            </article>
+            <article class="dose-row" data-done="false" data-key="evening-metformin">
+              <div class="time">19:00</div>
+              <div>
+                <div class="medicine-title">
+                  <strong>二甲双胍缓释片</strong>
+                  <span class="badge badge-warning">待服用</span>
+                </div>
+                <div class="medicine-note">0.5g · 晚餐后 · 和早餐剂量共用同一盒库存</div>
+              </div>
+              <button class="btn take-btn" type="button">我已吃药</button>
+            </article>
+            <article class="dose-row" data-done="false" data-key="night-statin">
+              <div class="time">21:30</div>
+              <div>
+                <div class="medicine-title">
+                  <strong>阿托伐他汀钙片</strong>
+                  <span class="badge badge-warning">待服用</span>
+                </div>
+                <div class="medicine-note">20mg · 睡前 · 剩余 26 天</div>
+              </div>
+              <button class="btn take-btn" type="button">我已吃药</button>
+            </article>
+          </div>
+
+          <div class="panel missed-help">
+            <h3>如果忘了吃，先别慌</h3>
+            <p>不要自己加倍吃药。是否补服，请按医生医嘱处理；这里先帮你留下记录，复诊时更容易说明情况。</p>
+            <div class="missed-actions">
+              <button class="btn" id="lateRecordBtn" type="button">补记：刚刚吃过了</button>
+              <button class="btn" id="skipDoseBtn" type="button">这次先不吃，留个原因</button>
+              <button class="btn" data-jump="refill" type="button">把这条记到复诊摘要</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="view view-shell" id="view-refill" aria-label="复诊续方">
+          <div class="section-head">
+            <div>
+              <h2>复诊续方</h2>
+              <p>按顺序准备，避免药吃完了才临时补资料。</p>
+            </div>
+          </div>
+
+          <div class="trust-note" style="margin-bottom: 14px">
+            <strong id="refillStatusTitle">当前还差一步</strong>
+            <p id="refillStatusText">补 1 次晚间血压后，小管家会把近 30 天用药和指标先整理出来，你确认后再发起复诊。</p>
+          </div>
+
+          <form class="panel page-card" id="bpForm" novalidate>
+            <div class="section-head">
+              <div>
+                <h2>补一次晚间血压</h2>
+                <p>只用于复诊准备，不会自动发送给医生。</p>
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="field">
+                <label for="bpSystolic">收缩压 <span class="required-mark">*</span></label>
+                <input
+                  id="bpSystolic"
+                  name="bpSystolic"
+                  type="number"
+                  inputmode="numeric"
+                  min="80"
+                  max="220"
+                  placeholder="例如：128"
+                  required
+                />
+                <div class="field-help">请输入 80-220 之间的数值</div>
+                <div class="field-error" id="bpSystolicError" aria-live="polite"></div>
+              </div>
+              <div class="field">
+                <label for="bpDiastolic">舒张压 <span class="required-mark">*</span></label>
+                <input
+                  id="bpDiastolic"
+                  name="bpDiastolic"
+                  type="number"
+                  inputmode="numeric"
+                  min="50"
+                  max="140"
+                  placeholder="例如：82"
+                  required
+                />
+                <div class="field-help">请输入 50-140 之间的数值</div>
+                <div class="field-error" id="bpDiastolicError" aria-live="polite"></div>
+              </div>
+              <div class="field wide">
+                <label for="bpTime">记录时间 <span class="required-mark">*</span></label>
+                <input id="bpTime" name="bpTime" type="time" value="20:30" required />
+                <div class="field-help">建议记录今晚测量的时间，提交前你可以再检查一次。</div>
+                <div class="field-error" id="bpTimeError" aria-live="polite"></div>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-primary" id="bpSubmitBtn" type="submit">记录晚间血压</button>
+            </div>
+          </form>
+
+          <div class="action-note success" id="bpResultNote" hidden>
+            <strong>晚间血压已补齐</strong>
+            <p id="bpResultText">已记录 128/82，20:30。你现在可以预约复诊，也可以先检查给医生的摘要。</p>
+          </div>
+
+          <div class="subtle-actions" style="margin-bottom: 14px">
+            <button class="btn btn-primary" id="bookVisitBtn" type="button" disabled>补齐资料后可预约复诊</button>
+            <button class="btn" id="summaryJumpBtn" data-jump="summary" type="button">先检查给医生的摘要</button>
+          </div>
+
+          <div class="panel timeline">
+            <article class="timeline-item active" id="timeline-1">
+              <div class="timeline-step">1</div>
+              <div class="timeline-copy">
+                <h3>补齐复诊资料</h3>
+                <p id="timelineText1">还缺 1 次晚间血压。补齐后可先检查复诊摘要。</p>
+              </div>
+            </article>
+            <article class="timeline-item" id="timeline-2">
+              <div class="timeline-step">2</div>
+              <div class="timeline-copy">
+                <h3>预约 2026 年 5 月 1 日复诊</h3>
+                <p id="timelineText2">资料齐全后再预约，避免进入问诊时还要临时补数据。</p>
+              </div>
+            </article>
+            <article class="timeline-item" id="timeline-3">
+              <div class="timeline-step">3</div>
+              <div class="timeline-copy">
+                <h3>处方核对</h3>
+                <p id="timelineText3">复诊后核对新处方与家中库存，避免重复购买。</p>
+              </div>
+            </article>
+            <article class="timeline-item" id="timeline-4">
+              <div class="timeline-step">4</div>
+              <div class="timeline-copy">
+                <h3>按需购药</h3>
+                <p id="timelineText4">只补低库存药品，新计划会自动回到你的吃药提醒里。</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="view view-shell" id="view-inventory" aria-label="药品库存">
+          <div class="section-head">
+            <div>
+              <h2>药品库存</h2>
+              <p>按剩余天数排好，先处理快见底的，别把够用的又买一遍。</p>
+            </div>
+          </div>
+
+          <div class="panel page-card">
+            <div class="inventory-list">
+              <div class="stock-row">
+                <div class="stock-title">
+                  <span>二甲双胍缓释片</span>
+                  <span class="badge badge-danger" id="metforminDaysBadge">9 天</span>
+                </div>
+                <div class="progress" aria-hidden="true">
+                  <div class="bar" style="--w: 28%; --c: var(--danger)"></div>
+                </div>
+                <div class="stock-action">
+                  <p id="metforminStockText">快没了。先把复诊资料补齐，再预约 2026 年 5 月 1 日续方。</p>
+                  <button class="btn" data-jump="refill" type="button">去补资料</button>
+                </div>
+              </div>
+
+              <div class="stock-row">
+                <div class="stock-title">
+                  <span>硝苯地平控释片</span>
+                  <span class="badge badge-warning">18 天</span>
+                </div>
+                <div class="progress" aria-hidden="true">
+                  <div class="bar" style="--w: 58%; --c: var(--warning)"></div>
+                </div>
+                <div class="stock-action">
+                  <p>还够。复诊后核对新处方，不需要现在补买。</p>
+                  <button class="btn" data-jump="refill" type="button">复诊时核对</button>
+                </div>
+              </div>
+
+              <div class="stock-row">
+                <div class="stock-title">
+                  <span>阿托伐他汀钙片</span>
+                  <span class="badge badge-success">26 天</span>
+                </div>
+                <div class="progress" aria-hidden="true">
+                  <div class="bar" style="--w: 84%; --c: var(--primary)"></div>
+                </div>
+                <div class="stock-action">
+                  <p id="duplicateCheckText">还够，先别重复购买。你可以先核对近 30 天订单。</p>
+                  <button class="btn" id="duplicateCheckBtn" type="button">检查近 30 天订单</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view view-shell" id="view-family" aria-label="家属同步">
+          <div class="section-head">
+            <div>
+              <h2>家属管理</h2>
+              <p>让家属只知道该知道的，不把不需要的内容一起推过去。</p>
+            </div>
+          </div>
+
+          <div class="trust-note" style="margin-bottom: 14px">
+            <strong>家属会收到什么</strong>
+            <p id="familyTrustText">只发送关键提醒，例如“晚饭后还没记录吃药”或“二甲双胍只剩 9 天”。家属看不到隐私备注，也不会替你自动改药。</p>
+          </div>
+
+          <section class="family-list" id="familyList" aria-label="当前家属"></section>
+
+          <form class="panel page-card" id="familyForm" style="margin-bottom: 14px" novalidate>
+            <div class="section-head">
+              <div>
+                <h2 id="familyFormTitle">新增家属</h2>
+                <p id="familyFormIntro">新增后默认只接收关键提醒，可再单独调整权限。</p>
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="field">
+                <label for="familyName">姓名 <span class="required-mark">*</span></label>
+                <input id="familyName" name="familyName" placeholder="例如：李明" required />
+                <div class="field-help">姓名只用于在提醒里区分家属身份</div>
+                <div class="field-error" id="familyNameError" aria-live="polite"></div>
+              </div>
+              <div class="field">
+                <label for="familyRelation">关系 <span class="required-mark">*</span></label>
+                <select id="familyRelation" name="familyRelation" required>
+                  <option value="">请选择关系</option>
+                  <option>儿子</option>
+                  <option>女儿</option>
+                  <option>配偶</option>
+                  <option>其他家属</option>
+                </select>
+                <div class="field-help">关系会显示在提醒接收名单里</div>
+                <div class="field-error" id="familyRelationError" aria-live="polite"></div>
+              </div>
+              <div class="field">
+                <label for="familyContact">联系方式 <span class="required-mark">*</span></label>
+                <input
+                  id="familyContact"
+                  name="familyContact"
+                  type="tel"
+                  inputmode="numeric"
+                  autocomplete="tel-national"
+                  placeholder="例如：13800138000"
+                  required
+                />
+                <div class="field-help">仅用于提醒展示，原型不会真实发送消息</div>
+                <div class="field-error" id="familyContactError" aria-live="polite"></div>
+              </div>
+              <div class="field">
+                <label for="familyPermission">权限 <span class="required-mark">*</span></label>
+                <select id="familyPermission" name="familyPermission" required>
+                  <option value="">请选择权限</option>
+                  <option>可以收到提醒 + 可以帮我添加药</option>
+                  <option>只可以收到提醒</option>
+                  <option>只可以收到复诊提醒</option>
+                </select>
+                <div class="field-help">家属默认看不到你的隐私备注</div>
+                <div class="field-error" id="familyPermissionError" aria-live="polite"></div>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-primary" id="familySubmitBtn" type="submit">添加家属</button>
+            </div>
+          </form>
+
+          <div class="panel page-card settings-list">
+            <div class="section-head">
+              <div>
+                <h2>提醒规则</h2>
+                <p>这些规则只会同步给有权限的家属。</p>
+              </div>
+            </div>
+
+            <div class="setting-row">
+              <div>
+                <strong>漏服提醒</strong>
+                <span>超过 2 小时还没记录吃药时通知家属</span>
+              </div>
+              <label class="switch" aria-label="漏服提醒">
+                <input type="checkbox" data-setting="missed" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="setting-row">
+              <div>
+                <strong>低库存提醒</strong>
+                <span>少于 10 天时自动提醒，不需要家属反复确认</span>
+              </div>
+              <label class="switch" aria-label="低库存提醒">
+                <input type="checkbox" data-setting="lowStock" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="setting-row">
+              <div>
+                <strong>复诊前提醒</strong>
+                <span>复诊前 3 天同步准备事项，避免当天才想起来</span>
+              </div>
+              <label class="switch" aria-label="复诊前提醒">
+                <input type="checkbox" data-setting="refill" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <section class="view view-shell" id="view-summary" aria-label="给医生的摘要">
+          <div class="section-head">
+            <div>
+              <h2>给医生的摘要</h2>
+              <p>你先看一遍，确认没问题后再带去复诊，不会自动发送。</p>
+            </div>
+          </div>
+
+          <div class="trust-note" style="margin-bottom: 14px">
+            <strong id="summaryTrustTitle">可以先检查，再决定要不要提交</strong>
+            <p id="summaryTrustText">摘要来自处方、购药记录、吃药记录和你手动补的指标。它帮你说明近况，不会自动改药，也不会自动发给医生。</p>
+          </div>
+
+          <div class="summary-grid">
+            <article class="summary-block">
+              <h3>近期服药</h3>
+              <p id="summaryDoseText">今天已吃 2 次药，还有 2 次待记录。近 7 天有 1 次晚间服药延迟。</p>
+            </article>
+            <article class="summary-block">
+              <h3>指标情况</h3>
+              <p id="summaryMetricText">晚间血压还没补齐。补齐后会把今天的测量值一并整理进摘要。</p>
+            </article>
+            <article class="summary-block">
+              <h3>库存风险</h3>
+              <p id="summaryInventoryText">二甲双胍缓释片剩余 9 天，低于安全库存线，需要在 2026 年 5 月 1 日复诊前完成续方准备。</p>
+            </article>
+            <article class="summary-block">
+              <h3>照护备注</h3>
+              <p id="summaryCareText">家属提醒已开启低库存、漏服和复诊前提醒。未发现重复购药订单。</p>
+            </article>
+          </div>
+
+          <div class="metrics-grid" aria-label="关键指标">
+            <article class="metric">
+              <label>吃药情况 <span id="doseCount">2/4</span></label>
+              <strong id="adherence">50%</strong>
+              <span>今天按时记录的服药比例</span>
+            </article>
+            <article class="metric">
+              <label>晚间血压 <span class="badge badge-warning" id="bpBadge">待补</span></label>
+              <strong id="bpMetricValue">待补</strong>
+              <span id="bpMetricNote">补齐后再一起查看摘要</span>
+            </article>
+            <article class="metric">
+              <label>空腹血糖 <span class="badge badge-warning">偏高</span></label>
+              <strong>7.2</strong>
+              <span>mmol/L，复诊时建议让医生一起看</span>
+            </article>
+            <article class="metric">
+              <label>复诊状态 <span class="badge badge-danger" id="visitBadge">未预约</span></label>
+              <strong id="visitMetricValue">还差资料</strong>
+              <span id="visitMetricNote">补齐晚间血压后可预约 5 月 1 日复诊</span>
+            </article>
+          </div>
+        </section>
+
+        <section class="view view-shell" id="view-add" aria-label="新增计划">
+          <div class="section-head">
+            <div>
+              <h2>新增计划</h2>
+              <p>患者本人或家属都可以先录入，是否开始提醒由患者确认。</p>
+            </div>
+          </div>
+
+          <div class="trust-note" style="margin-bottom: 14px">
+            <strong>不会自动改医嘱</strong>
+            <p id="addTrustText">新增药品只会生成提醒，不会自动改变医嘱。药名、剂量和服用时间请以医生处方为准。</p>
+          </div>
+
+          <div class="trust-note" style="margin-bottom: 14px">
+            <strong>家属能帮到哪里</strong>
+            <p>适合子女先根据复诊处方填好药名、剂量和库存，患者确认后再开始提醒。</p>
+          </div>
+
+          <section class="panel pending-plan" id="pendingPlans" aria-label="待确认计划">
+            <h3 id="pendingPlanTitle">待确认计划</h3>
+            <p id="pendingPlanText">女儿已根据复诊处方添加，确认后才会开始提醒。本工具只做提醒和记录，不会替医生改药。</p>
+            <dl>
+              <dt>药品</dt>
+              <dd id="pendingMedication">缬沙坦胶囊</dd>
+              <dt>用法</dt>
+              <dd id="pendingUsage">80mg，每日一次，早餐后</dd>
+              <dt>库存</dt>
+              <dd id="pendingStock">14 天</dd>
+            </dl>
+            <div class="priority-actions" id="pendingPlanActions">
+              <button class="btn btn-primary" id="confirmPlanBtn" type="button">确认，这是我的药</button>
+              <button class="btn" id="askFamilyBtn" type="button">发给家属再确认一次</button>
+            </div>
+          </section>
+
+          <form class="panel page-card" id="medForm" novalidate>
+            <div class="form-grid">
+              <div class="field">
+                <label for="addedBy">添加人 <span class="required-mark">*</span></label>
+                <select id="addedBy" name="addedBy" required>
+                  <option value="">请选择添加人</option>
+                  <option>患者本人</option>
+                  <option>家属代添加</option>
+                  <option>医生/药师协助</option>
+                </select>
+                <div class="field-help">不同添加人会决定提醒文案的提示方式</div>
+                <div class="field-error" id="addedByError" aria-live="polite"></div>
+              </div>
+              <div class="field">
+                <label for="confirmNeed">确认方式 <span class="required-mark">*</span></label>
+                <select id="confirmNeed" name="confirmNeed" required>
+                  <option value="">请选择确认方式</option>
+                  <option>患者确认后生效</option>
+                  <option>立即加入提醒</option>
+                </select>
+                <div class="field-help">涉及家属代添加时，建议保留患者确认</div>
+                <div class="field-error" id="confirmNeedError" aria-live="polite"></div>
+              </div>
+              <div class="field">
+                <label for="medication">药品名称 <span class="required-mark">*</span></label>
+                <input id="medication" name="medication" placeholder="例如：缬沙坦胶囊" required />
+                <div class="field-help">尽量按处方原文填写，减少歧义</div>
+                <div class="field-error" id="medicationError" aria-live="polite"></div>
+              </div>
+              <div class="field">
+                <label for="dose">剂量 <span class="required-mark">*</span></label>
+                <input id="dose" name="dose" placeholder="例如：80mg" required />
+                <div class="field-help">写成处方上的剂量格式更容易核对</div>
+                <div class="field-error" id="doseError" aria-live="polite"></div>
+              </div>
+              <div class="field">
+                <label for="frequency">频次 <span class="required-mark">*</span></label>
+                <select id="frequency" name="frequency" required>
+                  <option value="">请选择频次</option>
+                  <option>每日一次</option>
+                  <option>每日两次</option>
+                  <option>每周一次</option>
+                </select>
+                <div class="field-help">后续提醒会按这里的频次展示</div>
+                <div class="field-error" id="frequencyError" aria-live="polite"></div>
+              </div>
+              <div class="field">
+                <label for="stockDays">当前库存天数 <span class="required-mark">*</span></label>
+                <input
+                  id="stockDays"
+                  name="stockDays"
+                  type="number"
+                  min="1"
+                  inputmode="numeric"
+                  placeholder="例如：14"
+                  required
+                />
+                <div class="field-help">按还够吃几天填写，不要写盒数</div>
+                <div class="field-error" id="stockDaysError" aria-live="polite"></div>
+              </div>
+              <div class="field wide">
+                <label for="habit">服用场景 <span class="required-mark">*</span></label>
+                <input id="habit" name="habit" placeholder="例如：早餐后服用" required />
+                <div class="field-help">尽量写成患者能直接看懂的生活化表达</div>
+                <div class="field-error" id="habitError" aria-live="polite"></div>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-primary" id="medSubmitBtn" type="submit">保存待确认计划</button>
+            </div>
+          </form>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      const views = {
+        home: {
+          title: "首页",
+          eyebrow: "今天，4 月 26 日",
+          intro: "先看今天最重要的事，再去处理下一次吃药和复诊准备。",
+        },
+        plan: {
+          title: "用药计划",
+          eyebrow: "记录吃药",
+          intro: "只处理今天每一次服药，减少干扰。",
+        },
+        refill: {
+          title: "复诊续方",
+          eyebrow: "连续照护",
+          intro: "按顺序补资料、预约复诊，再核对处方和购药。",
+        },
+        inventory: {
+          title: "药品库存",
+          eyebrow: "避免断药",
+          intro: "先处理快见底的药，够用的先别重复买。",
+        },
+        family: {
+          title: "家属管理",
+          eyebrow: "少打扰，只同步关键风险",
+          intro: "控制谁能收到提醒，也让家属知道自己看不到哪些内容。",
+        },
+        summary: {
+          title: "给医生的摘要",
+          eyebrow: "复诊准备",
+          intro: "你可以先检查这份摘要，确认后再带去复诊。",
+        },
+        add: {
+          title: "新增计划",
+          eyebrow: "确认后才会生效",
+          intro: "先录入，再由患者确认是否开始提醒。",
+        },
+      };
+
+      const state = {
+        bpRecorded: false,
+        visitBooked: false,
+        duplicateChecked: false,
+        pendingPlanConfirmed: false,
+        pendingPlanAsked: false,
+        pendingPlan: {
+          medication: "缬沙坦胶囊",
+          usage: "80mg，每日一次，早餐后",
+          stockDays: 14,
+        },
+        bpReading: null,
+        editingFamilyId: null,
+        reminderSettings: {
+          missed: true,
+          lowStock: true,
+          refill: true,
+        },
+        families: [
+          {
+            id: "liting",
+            name: "李婷",
+            relation: "女儿",
+            contact: "手机提醒 · 仅接收关键提醒",
+            permissionChoice: "可以收到提醒 + 可以帮我添加药",
+            permissionDetail: "可以收到提醒；可以帮我添加药；添加后需要我确认；不能看到隐私备注",
+            paused: false,
+          },
+          {
+            id: "wangjianguo",
+            name: "王建国",
+            relation: "先生",
+            contact: "微信提醒 · 只接收复诊和低库存提醒",
+            permissionChoice: "只可以收到复诊提醒",
+            permissionDetail: "只能收到提醒；不能帮我改药；不能看到隐私备注",
+            paused: false,
+          },
+        ],
+      };
+
+      const toast = document.querySelector("#toast");
+      const liveRegion = document.querySelector("#liveRegion");
+      const pageTitle = document.querySelector("#pageTitle");
+      const planRows = [...document.querySelectorAll(".dose-row")];
+      const fontButtons = [...document.querySelectorAll("[data-font-size]")];
+      const familyList = document.querySelector("#familyList");
+      const pendingPlans = document.querySelector("#pendingPlans");
+      const doseDone = document.querySelector("#doseDone");
+      const doseCount = document.querySelector("#doseCount");
+      const homeDoseStatus = document.querySelector("#homeDoseStatus");
+      const homeDoseRest = document.querySelector("#homeDoseRest");
+      const navDoseCount = document.querySelector("#navDoseCount");
+      const adherence = document.querySelector("#adherence");
+      const fontScales = {
+        normal: "1",
+        large: "1.12",
+        xlarge: "1.24",
+      };
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        window.clearTimeout(showToast.timer);
+        showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2200);
+      }
+
+      function announce(message) {
+        liveRegion.textContent = message;
+      }
+
+      function wait(ms) {
+        return new Promise((resolve) => window.setTimeout(resolve, ms));
+      }
+
+      function showView(name) {
+        document.querySelectorAll(".view").forEach((view) => view.classList.remove("active"));
+        document.querySelector(`#view-${name}`)?.classList.add("active");
+
+        document.querySelectorAll(".nav button").forEach((button) => {
+          button.toggleAttribute("aria-current", button.dataset.view === name);
+        });
+
+        document.querySelector("#pageTitle").textContent = views[name].title;
+        document.querySelector("#pageEyebrow").textContent = views[name].eyebrow;
+        document.querySelector("#pageIntro").textContent = views[name].intro;
+
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        pageTitle.focus({ preventScroll: true });
+        announce(`已切换到${views[name].title}`);
+      }
+
+      function setFontSize(size) {
+        const nextSize = fontScales[size] ? size : "normal";
+        document.documentElement.style.setProperty("--font-scale", fontScales[nextSize]);
+        fontButtons.forEach((button) => {
+          button.setAttribute("aria-pressed", String(button.dataset.fontSize === nextSize));
+        });
+        localStorage.setItem("med-font-size", nextSize);
+      }
+
+      function escapeText(value) {
+        return String(value).replace(/[&<>"']/g, (char) => {
+          const map = {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;",
+          };
+          return map[char];
+        });
+      }
+
+      function maskPhone(phone) {
+        const digits = String(phone).replace(/\D/g, "");
+        if (digits.length !== 11) {
+          return phone;
+        }
+        return `${digits.slice(0, 3)}****${digits.slice(-4)}`;
+      }
+
+      function getPermissionDetail(permissionChoice) {
+        if (permissionChoice === "可以收到提醒 + 可以帮我添加药") {
+          return "可以收到提醒；可以帮我添加药；添加后需要我确认；不能看到隐私备注";
+        }
+        if (permissionChoice === "只可以收到提醒") {
+          return "只能收到提醒；不能帮我改药；不能看到隐私备注";
+        }
+        return "只能收到复诊和低库存提醒；不能帮我改药；不能看到隐私备注";
+      }
+
+      function setFieldError(name, message) {
+        const field = document.querySelector(`[name="${name}"]`);
+        const error = document.querySelector(`#${name}Error`);
+        if (!field || !error) {
+          return;
+        }
+        field.setAttribute("aria-invalid", String(Boolean(message)));
+        error.textContent = message || "";
+      }
+
+      function clearFieldError(name) {
+        setFieldError(name, "");
+      }
+
+      function bindFieldClear(formId, fieldNames) {
+        fieldNames.forEach((name) => {
+          const field = document.querySelector(`#${formId} [name="${name}"]`);
+          if (!field) {
+            return;
+          }
+          field.addEventListener("input", () => clearFieldError(name));
+          field.addEventListener("change", () => clearFieldError(name));
+        });
+      }
+
+      function getPlanRow(key) {
+        return planRows.find((row) => row.dataset.key === key);
+      }
+
+      function setRowState(row, done) {
+        const button = row.querySelector(".take-btn");
+        const badge = row.querySelector(".badge");
+        row.dataset.done = String(done);
+        button.classList.toggle("done", done);
+        button.textContent = done ? "已吃过" : "我已吃药";
+        badge.className = `badge ${done ? "badge-success" : "badge-warning"}`;
+        badge.textContent = done ? "已服用" : "待服用";
+      }
+
+      function getPlanProgress() {
+        const done = planRows.filter((row) => row.dataset.done === "true").length;
+        const total = planRows.length;
+        return {
+          done,
+          total,
+          rest: total - done,
+          percent: Math.round((done / total) * 100),
+        };
+      }
+
+      function updateNextDoseCard() {
+        const nextRow = planRows.find((row) => row.dataset.done !== "true");
+        const time = document.querySelector("#nextDoseTime");
+        const title = document.querySelector("#nextDoseTitle");
+        const text = document.querySelector("#nextDoseText");
+        const homeTakeBtn = document.querySelector("#homeTakeBtn");
+
+        if (!nextRow) {
+          time.textContent = "已完成";
+          title.textContent = "今天的药都记录好了";
+          text.textContent = "今晚不需要再补打卡，家属和摘要里看到的也是最新状态。";
+          homeTakeBtn.textContent = "今天已记录完成";
+          homeTakeBtn.disabled = true;
+          return;
+        }
+
+        const medName = nextRow.querySelector(".medicine-title strong").textContent;
+        const note = nextRow.querySelector(".medicine-note").textContent;
+        const nextTime = nextRow.querySelector(".time").textContent;
+        time.textContent = nextTime;
+        title.textContent = `${nextTime} 记录 ${medName}`;
+        text.textContent = `${note}。记录后今天的服药摘要会立刻更新。`;
+        homeTakeBtn.textContent = "我已吃药";
+        homeTakeBtn.disabled = false;
+      }
+
+      function updateTasks() {
+        const eveningDone = getPlanRow("evening-metformin")?.dataset.done === "true";
+        const planDone = state.pendingPlanConfirmed;
+        const refillReady = state.bpRecorded;
+
+        const taskDose = document.querySelector("#task-dose");
+        const taskDoseTitle = document.querySelector("#taskDoseTitle");
+        const taskDoseText = document.querySelector("#taskDoseText");
+        const taskDoseBtn = document.querySelector("#taskDoseBtn");
+        taskDose.classList.toggle("done", eveningDone);
+        taskDoseTitle.textContent = eveningDone ? "今晚的二甲双胍已记录" : "19:00 记录这次二甲双胍";
+        taskDoseText.textContent = eveningDone
+          ? "这一条已经完成，家属无需再为这次服药提醒"
+          : "吃完点“我已吃药”，家属提醒会自动消停";
+        taskDoseBtn.textContent = eveningDone ? "查看今晚剩余用药" : "现在记录";
+
+        const taskRefill = document.querySelector("#task-refill");
+        const taskRefillTitle = document.querySelector("#taskRefillTitle");
+        const taskRefillText = document.querySelector("#taskRefillText");
+        const taskRefillBtn = document.querySelector("#taskRefillBtn");
+        if (!state.bpRecorded) {
+          taskRefill.classList.remove("done");
+          taskRefillTitle.textContent = "补 1 次晚间血压";
+          taskRefillText.textContent = "补齐后就能预约复诊，不会因为资料不全来回补交";
+          taskRefillBtn.textContent = "去补资料";
+        } else if (!state.visitBooked) {
+          taskRefill.classList.remove("done");
+          taskRefillTitle.textContent = "资料已补齐，现在预约复诊";
+          taskRefillText.textContent = "你已经可以预约 2026 年 5 月 1 日复诊，避免库存撑不到复诊后";
+          taskRefillBtn.textContent = "现在预约";
+        } else {
+          taskRefill.classList.add("done");
+          taskRefillTitle.textContent = "复诊已经预约好";
+          taskRefillText.textContent = "接下来按处方核对库存，再决定哪些药需要补买";
+          taskRefillBtn.textContent = "查看复诊摘要";
+        }
+
+        const taskPlan = document.querySelector("#task-plan");
+        const taskPlanTitle = document.querySelector("#taskPlanTitle");
+        const taskPlanText = document.querySelector("#taskPlanText");
+        const taskPlanBtn = document.querySelector("#taskPlanBtn");
+        taskPlan.classList.toggle("done", planDone);
+        taskPlanTitle.textContent = planDone ? "待确认新药已经确认" : "确认家属代添加的新药";
+        taskPlanText.textContent = planDone
+          ? "缬沙坦胶囊会从明天早餐后开始提醒，仍以医生处方为准"
+          : "确认后才会开始提醒，不会自动改你的医嘱";
+        taskPlanBtn.textContent = planDone ? "查看新增计划" : "去确认";
+
+        const remaining = [eveningDone, state.bpRecorded && state.visitBooked, planDone].filter(Boolean).length;
+        document.querySelector("#navHomeCount").textContent = `${3 - remaining} 件`;
+        document.querySelector("#todoSummary").textContent = remaining === 3 ? "今天这 3 件都完成了" : `还有 ${3 - remaining} 件需要你确认`;
+      }
+
+      function updatePriorityCard() {
+        const priorityTitle = document.querySelector("#priorityTitle");
+        const priorityText = document.querySelector("#priorityText");
+        const actionBtn = document.querySelector("#priorityActionBtn");
+        const homeRefillStatus = document.querySelector("#homeRefillStatus");
+        const homeRefillDetail = document.querySelector("#homeRefillDetail");
+
+        actionBtn.disabled = false;
+        actionBtn.dataset.action = "";
+
+        if (!state.bpRecorded) {
+          priorityTitle.textContent = "这盒二甲双胍快吃完了";
+          priorityText.textContent = "家里只够吃 9 天。先补 1 次晚间血压，整理好资料后再预约 2026 年 5 月 1 日复诊。";
+          actionBtn.textContent = "先补晚间血压";
+          actionBtn.dataset.action = "record-bp";
+          homeRefillStatus.textContent = "还差 1 次晚间血压";
+          homeRefillDetail.textContent = "补齐后就能预约 5 月 1 日复诊";
+        } else if (!state.visitBooked) {
+          priorityTitle.textContent = "复诊资料已经补齐";
+          priorityText.textContent = "今晚的晚间血压已经记好。现在可以预约 2026 年 5 月 1 日复诊，避免库存撑不到新处方下来。";
+          actionBtn.textContent = "现在预约复诊";
+          actionBtn.dataset.action = "book-visit";
+          homeRefillStatus.textContent = "资料已补齐";
+          homeRefillDetail.textContent = "现在就能预约 5 月 1 日复诊";
+        } else {
+          priorityTitle.textContent = "复诊已经约上了";
+          priorityText.textContent = "2026 年 5 月 1 日复诊已预约。接下来只需要按时吃药，并在复诊前检查给医生的摘要。";
+          actionBtn.textContent = "查看给医生的摘要";
+          actionBtn.dataset.action = "open-summary";
+          homeRefillStatus.textContent = "复诊已预约";
+          homeRefillDetail.textContent = "现在重点是按时吃药和复诊前检查摘要";
+        }
+      }
+
+      function updateRefillFlow() {
+        const statusTitle = document.querySelector("#refillStatusTitle");
+        const statusText = document.querySelector("#refillStatusText");
+        const bpResultNote = document.querySelector("#bpResultNote");
+        const bpResultText = document.querySelector("#bpResultText");
+        const bookVisitBtn = document.querySelector("#bookVisitBtn");
+        const navRefillCount = document.querySelector("#navRefillCount");
+
+        if (!state.bpRecorded) {
+          statusTitle.textContent = "当前还差一步";
+          statusText.textContent = "补 1 次晚间血压后，小管家会把近 30 天用药和指标先整理出来，你确认后再发起复诊。";
+          bpResultNote.hidden = true;
+          bookVisitBtn.textContent = "补齐资料后可预约复诊";
+          bookVisitBtn.disabled = true;
+          navRefillCount.textContent = "还差 1 步";
+        } else if (!state.visitBooked) {
+          statusTitle.textContent = "资料已补齐，可以预约复诊";
+          statusText.textContent = "晚间血压已经补齐。现在可以预约 2026 年 5 月 1 日复诊，也可以先看看准备给医生的摘要。";
+          bpResultNote.hidden = false;
+          bpResultText.textContent = `已记录 ${state.bpReading.systolic}/${state.bpReading.diastolic}，${state.bpReading.time}。你现在可以预约复诊，也可以先检查给医生的摘要。`;
+          bookVisitBtn.textContent = "预约 2026 年 5 月 1 日复诊";
+          bookVisitBtn.disabled = false;
+          navRefillCount.textContent = "可预约";
+        } else {
+          statusTitle.textContent = "复诊已经预约完成";
+          statusText.textContent = "2026 年 5 月 1 日复诊已预约。复诊前再检查一次摘要，带上家中库存情况去核对处方即可。";
+          bpResultNote.hidden = false;
+          bpResultText.textContent = `已记录 ${state.bpReading.systolic}/${state.bpReading.diastolic}，${state.bpReading.time}，并完成复诊预约。接下来按新处方核对库存即可。`;
+          bookVisitBtn.textContent = "已预约 2026 年 5 月 1 日复诊";
+          bookVisitBtn.disabled = true;
+          navRefillCount.textContent = "已预约";
+        }
+
+        const timeline1 = document.querySelector("#timeline-1");
+        const timeline2 = document.querySelector("#timeline-2");
+        const timeline3 = document.querySelector("#timeline-3");
+        const timeline4 = document.querySelector("#timeline-4");
+
+        timeline1.className = `timeline-item ${state.bpRecorded ? "complete" : "active"}`;
+        timeline2.className = `timeline-item ${state.bpRecorded && !state.visitBooked ? "active" : state.visitBooked ? "complete" : ""}`;
+        timeline3.className = `timeline-item ${state.visitBooked ? "active" : ""}`;
+        timeline4.className = "timeline-item";
+
+        document.querySelector("#timelineText1").textContent = state.bpRecorded
+          ? "晚间血压已补齐，复诊摘要已经准备好。"
+          : "还缺 1 次晚间血压。补齐后可先检查复诊摘要。";
+        document.querySelector("#timelineText2").textContent = state.visitBooked
+          ? "已预约 2026 年 5 月 1 日复诊，进入问诊前不需要再补资料。"
+          : "资料齐全后再预约，避免进入问诊时还要临时补数据。";
+        document.querySelector("#timelineText3").textContent = state.visitBooked
+          ? "复诊后核对新处方与家中库存，避免把够用的药又买一遍。"
+          : "复诊后会在这里核对新处方与家中库存。";
+      }
+
+      function updateInventory() {
+        const metforminStockText = document.querySelector("#metforminStockText");
+        metforminStockText.textContent = state.visitBooked
+          ? "复诊已预约。二甲双胍只剩 9 天，复诊后优先核对这盒药的续方。"
+          : state.bpRecorded
+            ? "资料已补齐。二甲双胍只剩 9 天，现在可以直接预约 2026 年 5 月 1 日复诊。"
+            : "快没了。先把复诊资料补齐，再预约 2026 年 5 月 1 日续方。";
+
+        const duplicateCheckText = document.querySelector("#duplicateCheckText");
+        const duplicateCheckBtn = document.querySelector("#duplicateCheckBtn");
+        if (state.duplicateChecked) {
+          duplicateCheckText.textContent = "近 30 天没有发现阿托伐他汀重复订单，这盒药还够，不用急着补买。";
+          duplicateCheckBtn.textContent = "已核对订单";
+          duplicateCheckBtn.disabled = true;
+        }
+      }
+
+      function updateSummary() {
+        const progress = getPlanProgress();
+        document.querySelector("#summaryDoseText").textContent =
+          progress.rest === 0
+            ? "今天的 4 次用药都已记录完成，近 7 天有 1 次晚间服药延迟。"
+            : `今天已吃 ${progress.done} 次药，还有 ${progress.rest} 次待记录。近 7 天有 1 次晚间服药延迟。`;
+
+        if (state.bpRecorded) {
+          document.querySelector("#summaryMetricText").textContent =
+            `晚间血压已补齐，记录为 ${state.bpReading.systolic}/${state.bpReading.diastolic}，测量时间 ${state.bpReading.time}。`;
+          document.querySelector("#bpBadge").className = "badge badge-success";
+          document.querySelector("#bpBadge").textContent = "已补";
+          document.querySelector("#bpMetricValue").textContent = `${state.bpReading.systolic}/${state.bpReading.diastolic}`;
+          document.querySelector("#bpMetricNote").textContent = `${state.bpReading.time} 记录，提交前你还能再检查一次`;
+        } else {
+          document.querySelector("#summaryMetricText").textContent =
+            "晚间血压还没补齐。补齐后会把今天的测量值一并整理进摘要。";
+          document.querySelector("#bpBadge").className = "badge badge-warning";
+          document.querySelector("#bpBadge").textContent = "待补";
+          document.querySelector("#bpMetricValue").textContent = "待补";
+          document.querySelector("#bpMetricNote").textContent = "补齐后再一起查看摘要";
+        }
+
+        if (state.visitBooked) {
+          document.querySelector("#visitBadge").className = "badge badge-success";
+          document.querySelector("#visitBadge").textContent = "已预约";
+          document.querySelector("#visitMetricValue").textContent = "5 月 1 日";
+          document.querySelector("#visitMetricNote").textContent = "复诊已约好，提交前可再检查摘要";
+        } else if (state.bpRecorded) {
+          document.querySelector("#visitBadge").className = "badge badge-warning";
+          document.querySelector("#visitBadge").textContent = "可预约";
+          document.querySelector("#visitMetricValue").textContent = "可预约";
+          document.querySelector("#visitMetricNote").textContent = "资料已补齐，可以预约 5 月 1 日复诊";
+        } else {
+          document.querySelector("#visitBadge").className = "badge badge-danger";
+          document.querySelector("#visitBadge").textContent = "未预约";
+          document.querySelector("#visitMetricValue").textContent = "还差资料";
+          document.querySelector("#visitMetricNote").textContent = "补齐晚间血压后可预约 5 月 1 日复诊";
+        }
+
+        document.querySelector("#summaryInventoryText").textContent = state.visitBooked
+          ? "二甲双胍缓释片剩余 9 天，已预约 2026 年 5 月 1 日复诊，复诊后优先核对续方。"
+          : "二甲双胍缓释片剩余 9 天，低于安全库存线，需要在 2026 年 5 月 1 日复诊前完成续方准备。";
+
+        const enabledReminders = Object.values(state.reminderSettings).filter(Boolean).length;
+        document.querySelector("#summaryCareText").textContent = `${enabledReminders} 项家属提醒处于开启状态。${state.duplicateChecked ? "近 30 天未发现重复购药订单。" : "阿托伐他汀订单尚未核对。"}${state.pendingPlanConfirmed ? " 缬沙坦胶囊待新计划已确认。" : ""}`;
+      }
+
+      function renderFamilyList() {
+        familyList.innerHTML = state.families
+          .map((family) => {
+            const reminderLine = family.paused
+              ? "提醒状态：已暂停，暂不发送新的漏服、库存和复诊提醒"
+              : `提醒状态：${family.contact}`;
+            return `<article class="family-card ${family.paused ? "paused" : ""}" data-family-id="${family.id}">
+              <div>
+                <strong>${escapeText(family.name)} · ${escapeText(family.relation)}</strong>
+                <span>${escapeText(reminderLine)}</span>
+                <span>权限：${escapeText(family.permissionDetail)}</span>
+              </div>
+              <div class="family-actions">
+                <button class="btn family-edit-btn" type="button" data-family-id="${family.id}">编辑权限</button>
+                <button class="btn family-pause-btn" type="button" data-family-id="${family.id}">${family.paused ? "恢复提醒" : "暂停提醒"}</button>
+              </div>
+            </article>`;
+          })
+          .join("");
+      }
+
+      function resetFamilyForm() {
+        state.editingFamilyId = null;
+        document.querySelector("#familyFormTitle").textContent = "新增家属";
+        document.querySelector("#familyFormIntro").textContent = "新增后默认只接收关键提醒，可再单独调整权限。";
+        document.querySelector("#familySubmitBtn").textContent = "添加家属";
+        document.querySelector("#familyForm").reset();
+      }
+
+      function updatePendingPlan() {
+        document.querySelector("#pendingMedication").textContent = state.pendingPlan.medication;
+        document.querySelector("#pendingUsage").textContent = state.pendingPlan.usage;
+        document.querySelector("#pendingStock").textContent = `${state.pendingPlan.stockDays} 天`;
+
+        if (state.pendingPlanConfirmed) {
+          pendingPlans.classList.add("confirmed");
+          document.querySelector("#pendingPlanTitle").textContent = "待确认计划已确认";
+          document.querySelector("#pendingPlanText").textContent = `${state.pendingPlan.medication} 已确认，会在对应时间提醒；是否继续用药仍以医生处方为准。`;
+          document.querySelector("#pendingPlanActions").hidden = true;
+          document.querySelector("#addTrustText").textContent = "新增药品已经确认，但后续是否继续服用仍以医生处方为准，不会自动改医嘱。";
+        } else {
+          pendingPlans.classList.remove("confirmed");
+          document.querySelector("#pendingPlanTitle").textContent = "待确认计划";
+          document.querySelector("#pendingPlanText").textContent = state.pendingPlanAsked
+            ? `已把 ${state.pendingPlan.medication} 再发给家属确认一次，患者确认前不会开始提醒。`
+            : "女儿已根据复诊处方添加，确认后才会开始提醒。本工具只做提醒和记录，不会替医生改药。";
+          document.querySelector("#pendingPlanActions").hidden = false;
+        }
+      }
+
+      function refreshProgress() {
+        const progress = getPlanProgress();
+        const text = `${progress.done}/${progress.total}`;
+        doseDone.textContent = `今天已吃 ${progress.done} 次，还有 ${progress.rest} 次`;
+        doseCount.textContent = text;
+        homeDoseStatus.textContent = `已吃 ${progress.done} 次`;
+        homeDoseRest.textContent = progress.rest === 0 ? "今天的药都记录好了" : `还有 ${progress.rest} 次待记录`;
+        navDoseCount.textContent = text;
+        adherence.textContent = `${progress.percent}%`;
+        updateNextDoseCard();
+        updateTasks();
+        updateSummary();
+      }
+
+      function refreshAll() {
+        refreshProgress();
+        updatePriorityCard();
+        updateRefillFlow();
+        updateInventory();
+        updateSummary();
+        renderFamilyList();
+        updatePendingPlan();
+      }
+
+      async function recordBloodPressure(event) {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const systolic = form.bpSystolic.value.trim();
+        const diastolic = form.bpDiastolic.value.trim();
+        const time = form.bpTime.value.trim();
+
+        let valid = true;
+        if (!systolic || Number(systolic) < 80 || Number(systolic) > 220) {
+          setFieldError("bpSystolic", "请填写 80-220 之间的收缩压");
+          valid = false;
+        }
+        if (!diastolic || Number(diastolic) < 50 || Number(diastolic) > 140) {
+          setFieldError("bpDiastolic", "请填写 50-140 之间的舒张压");
+          valid = false;
+        }
+        if (!time) {
+          setFieldError("bpTime", "请选择今晚的记录时间");
+          valid = false;
+        }
+
+        if (!valid) {
+          showToast("先把晚间血压填完整");
+          announce("晚间血压表单有未完成项");
+          return;
+        }
+
+        const submitBtn = document.querySelector("#bpSubmitBtn");
+        submitBtn.disabled = true;
+        submitBtn.textContent = "正在保存...";
+        await wait(450);
+
+        state.bpRecorded = true;
+        state.bpReading = { systolic, diastolic, time };
+
+        submitBtn.disabled = false;
+        submitBtn.textContent = "晚间血压已记录";
+        refreshAll();
+        showToast(`已记录晚间血压 ${systolic}/${diastolic}`);
+        announce("晚间血压已记录，可以预约复诊");
+      }
+
+      function focusBpForm() {
+        showView("refill");
+        document.querySelector("#bpSystolic").focus();
+      }
+
+      function bookVisit() {
+        if (!state.bpRecorded) {
+          focusBpForm();
+          showToast("先补 1 次晚间血压，再预约复诊");
+          return;
+        }
+        if (state.visitBooked) {
+          showView("summary");
+          return;
+        }
+        state.visitBooked = true;
+        refreshAll();
+        showToast("已预约 2026 年 5 月 1 日复诊");
+        announce("复诊已预约");
+      }
+
+      async function submitFamilyForm(event) {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const name = form.familyName.value.trim();
+        const relation = form.familyRelation.value.trim();
+        const contactRaw = form.familyContact.value.trim();
+        const permission = form.familyPermission.value.trim();
+        const phoneDigits = contactRaw.replace(/\D/g, "");
+
+        let valid = true;
+        if (!name) {
+          setFieldError("familyName", "请填写家属姓名");
+          valid = false;
+        }
+        if (!relation) {
+          setFieldError("familyRelation", "请选择家属关系");
+          valid = false;
+        }
+        if (phoneDigits.length !== 11) {
+          setFieldError("familyContact", "请填写 11 位手机号，便于提醒展示");
+          valid = false;
+        }
+        if (!permission) {
+          setFieldError("familyPermission", "请选择家属权限");
+          valid = false;
+        }
+
+        if (!valid) {
+          showToast("先把家属信息填完整");
+          announce("家属表单有未完成项");
+          return;
+        }
+
+        const submitBtn = document.querySelector("#familySubmitBtn");
+        submitBtn.disabled = true;
+        submitBtn.textContent = state.editingFamilyId ? "正在保存..." : "正在添加...";
+        await wait(420);
+
+        const reminderText = `${maskPhone(phoneDigits)} · ${permission.includes("复诊") ? "优先接收复诊提醒" : "接收关键提醒"}`;
+        const permissionDetail = getPermissionDetail(permission);
+
+        if (state.editingFamilyId) {
+          state.families = state.families.map((family) =>
+            family.id === state.editingFamilyId
+              ? {
+                  ...family,
+                  name,
+                  relation,
+                  contact: reminderText,
+                  permissionChoice: permission,
+                  permissionDetail,
+                }
+              : family,
+          );
+          showToast(`${name} 的提醒权限已更新`);
+        } else {
+          state.families.push({
+            id: `family-${Date.now()}`,
+            name,
+            relation,
+            contact: reminderText,
+            permissionChoice: permission,
+            permissionDetail,
+            paused: false,
+          });
+          showToast(`${name} 已加入家属管理`);
+        }
+
+        submitBtn.disabled = false;
+        resetFamilyForm();
+        refreshAll();
+      }
+
+      function startEditFamily(id) {
+        const family = state.families.find((item) => item.id === id);
+        if (!family) {
+          return;
+        }
+        state.editingFamilyId = id;
+        document.querySelector("#familyFormTitle").textContent = `编辑 ${family.name} 的权限`;
+        document.querySelector("#familyFormIntro").textContent = "修改后会立刻影响家属能收到的提醒范围。";
+        document.querySelector("#familySubmitBtn").textContent = "保存调整";
+        document.querySelector("#familyName").value = family.name;
+        document.querySelector("#familyRelation").value = family.relation;
+        document.querySelector("#familyContact").value = "";
+        document.querySelector("#familyPermission").value = family.permissionChoice;
+        showView("family");
+        document.querySelector("#familyName").focus();
+        showToast(`正在编辑 ${family.name} 的提醒权限`);
+      }
+
+      function toggleFamilyPause(id) {
+        state.families = state.families.map((family) =>
+          family.id === id ? { ...family, paused: !family.paused } : family,
+        );
+        refreshAll();
+        const family = state.families.find((item) => item.id === id);
+        showToast(family.paused ? `已暂停 ${family.name} 的提醒` : `已恢复 ${family.name} 的提醒`);
+      }
+
+      async function submitMedicationForm(event) {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const fields = {
+          addedBy: form.addedBy.value.trim(),
+          confirmNeed: form.confirmNeed.value.trim(),
+          medication: form.medication.value.trim(),
+          dose: form.dose.value.trim(),
+          frequency: form.frequency.value.trim(),
+          stockDays: form.stockDays.value.trim(),
+          habit: form.habit.value.trim(),
+        };
+
+        let valid = true;
+        Object.entries(fields).forEach(([name, value]) => {
+          if (!value) {
+            setFieldError(name, "这一项还没填");
+            valid = false;
+          }
+        });
+
+        if (fields.stockDays && Number(fields.stockDays) <= 0) {
+          setFieldError("stockDays", "库存天数要大于 0");
+          valid = false;
+        }
+
+        if (!valid) {
+          showToast("先把新增计划填完整");
+          announce("新增计划表单有未完成项");
+          return;
+        }
+
+        const submitBtn = document.querySelector("#medSubmitBtn");
+        submitBtn.disabled = true;
+        submitBtn.textContent = "正在保存...";
+        await wait(450);
+
+        state.pendingPlanConfirmed = false;
+        state.pendingPlanAsked = false;
+        state.pendingPlan = {
+          medication: fields.medication,
+          usage: `${fields.dose}，${fields.frequency}，${fields.habit}`,
+          stockDays: Number(fields.stockDays),
+        };
+
+        form.reset();
+        submitBtn.disabled = false;
+        submitBtn.textContent = "保存待确认计划";
+        refreshAll();
+        showToast(`${fields.medication} 已保存为待确认计划`);
+        announce("新增计划已保存为待确认状态");
+      }
+
+      function confirmPendingPlan() {
+        state.pendingPlanConfirmed = true;
+        refreshAll();
+        showToast(`已确认：${state.pendingPlan.medication} 会开始提醒`);
+        announce("待确认计划已确认");
+      }
+
+      function askFamilyAgain() {
+        state.pendingPlanAsked = true;
+        refreshAll();
+        showToast(`已发给家属再次确认 ${state.pendingPlan.medication}`);
+      }
+
+      document.querySelectorAll(".nav button").forEach((button) => {
+        button.addEventListener("click", () => showView(button.dataset.view));
+      });
+
+      document.querySelectorAll("[data-jump]").forEach((button) => {
+        button.addEventListener("click", () => showView(button.dataset.jump));
+      });
+
+      fontButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          setFontSize(button.dataset.fontSize);
+          showToast(`已切换为${button.textContent}显示`);
+        });
+      });
+
+      planRows.forEach((row) => {
+        row.querySelector(".take-btn").addEventListener("click", () => {
+          const done = row.dataset.done !== "true";
+          setRowState(row, done);
+          refreshAll();
+          showToast(done ? "已记录：这次药已吃过" : "已取消本次吃药记录");
+        });
+      });
+
+      document.querySelector("#homeTakeBtn").addEventListener("click", () => {
+        const nextRow = planRows.find((row) => row.dataset.done !== "true");
+        if (!nextRow) {
+          showToast("今天的药都记录好了");
+          return;
+        }
+        setRowState(nextRow, true);
+        refreshAll();
+        showToast("已记录下一次待服药");
+      });
+
+      document.querySelector("#taskDoseBtn").addEventListener("click", () => {
+        const eveningRow = getPlanRow("evening-metformin");
+        if (eveningRow && eveningRow.dataset.done !== "true") {
+          setRowState(eveningRow, true);
+          refreshAll();
+          showToast("今晚的二甲双胍已记录");
+        } else {
+          showView("plan");
+        }
+      });
+
+      document.querySelector("#taskRefillBtn").addEventListener("click", () => {
+        if (!state.bpRecorded) {
+          focusBpForm();
+        } else if (!state.visitBooked) {
+          bookVisit();
+          showView("refill");
+        } else {
+          showView("summary");
+        }
+      });
+
+      document.querySelector("#taskPlanBtn").addEventListener("click", () => {
+        showView("add");
+      });
+
+      document.querySelector("#priorityActionBtn").addEventListener("click", (event) => {
+        const action = event.currentTarget.dataset.action;
+        if (action === "record-bp") {
+          focusBpForm();
+        } else if (action === "book-visit") {
+          bookVisit();
+          showView("refill");
+        } else if (action === "open-summary") {
+          showView("summary");
+        }
+      });
+
+      document.querySelector("#bpForm").addEventListener("submit", recordBloodPressure);
+      document.querySelector("#bookVisitBtn").addEventListener("click", bookVisit);
+
+      document.querySelector("#duplicateCheckBtn").addEventListener("click", () => {
+        state.duplicateChecked = true;
+        refreshAll();
+        showToast("已核对近 30 天订单，没有发现重复购买");
+      });
+
+      document.querySelector("#lateRecordBtn").addEventListener("click", () => {
+        const nextRow = planRows.find((row) => row.dataset.done !== "true");
+        if (nextRow) {
+          setRowState(nextRow, true);
+          refreshAll();
+        }
+        showToast("已补记：刚刚吃过了。下次仍按原时间提醒");
+      });
+
+      document.querySelector("#skipDoseBtn").addEventListener("click", () => {
+        showToast("已记录这次未服用，复诊摘要里会提示医生一起看");
+      });
+
+      document.querySelector("#familyForm").addEventListener("submit", submitFamilyForm);
+      document.querySelector("#medForm").addEventListener("submit", submitMedicationForm);
+      document.querySelector("#confirmPlanBtn").addEventListener("click", confirmPendingPlan);
+      document.querySelector("#askFamilyBtn").addEventListener("click", askFamilyAgain);
+
+      familyList.addEventListener("click", (event) => {
+        const target = event.target.closest("button");
+        if (!target) {
+          return;
+        }
+        if (target.classList.contains("family-edit-btn")) {
+          startEditFamily(target.dataset.familyId);
+        }
+        if (target.classList.contains("family-pause-btn")) {
+          toggleFamilyPause(target.dataset.familyId);
+        }
+      });
+
+      document.querySelectorAll("[data-setting]").forEach((input) => {
+        input.addEventListener("change", () => {
+          state.reminderSettings[input.dataset.setting] = input.checked;
+          refreshAll();
+          showToast(`${input.closest(".setting-row").querySelector("strong").textContent}已${input.checked ? "开启" : "关闭"}`);
+        });
+      });
+
+      bindFieldClear("bpForm", ["bpSystolic", "bpDiastolic", "bpTime"]);
+      bindFieldClear("familyForm", ["familyName", "familyRelation", "familyContact", "familyPermission"]);
+      bindFieldClear("medForm", ["addedBy", "confirmNeed", "medication", "dose", "frequency", "stockDays", "habit"]);
+
+      setFontSize(localStorage.getItem("med-font-size") || "normal");
+      refreshAll();
+    </script>
+  </body>
+</html>
